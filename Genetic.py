@@ -1,6 +1,10 @@
 import ctypes
 import random
+from time import time
 import cv2
+from numpy import core
+from numpy.lib.function_base import select
+from numpy.testing._private.utils import rand
 import pynput
 import sys
 import numpy as np
@@ -58,6 +62,7 @@ def commandstart(action):
     if action == -1:
         presskey(0x01)#ESC
     elif action == 0:
+        #presskey(0x2c)#pressZ
         pass
     elif action == 1:
         presskey(0xcb)#LEFT
@@ -168,8 +173,28 @@ def commandend(action):
         releasekey(0xd0)#DOWN
         releasekey(0xcb)#LEFT
 
+#被弾確認用
+def Deathchack():
+    DEATHCHECK_FILE = "Death.png"
+    IMG_D = cv2.imread(DEATHCHECK_FILE, cv2.IMREAD_COLOR) #被弾確認用
+    X = 284
+    Y = 290
+    W = 670
+    H = 740 #撮影の座標指定
+    img = ImageGrab.grab((X, Y, W, H))
+    img = np.asarray(img, dtype="uint8")
+    img_1 = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    match_result_d = cv2.matchTemplate(img_1, IMG_D, cv2.TM_CCOEFF_NORMED)
+    death_check = np.column_stack(np.where(match_result_d >= 0.75))
+    if len(death_check) >= 1:
+        print("被弾")
+        return True
+    else:
+        return False
+
 #最初の個体を生成
 def initiral_population(num, length):
+    #0~17までの行動をランダムに生成
     pop = np.random.randint(0, 18, (num, length))
     return pop
 
@@ -179,39 +204,112 @@ def initial_population_load():
     return pop
 
 #適応度を計算＋差分の写真をとって保存
-def fitness_func():
-    pass
+def fitness_func(pop):
+    Done = False
+    for i in range(len(pop)):
+        t = 0
+        Done = False
+        while False:
+            Done = Deathchack()
+            if Done:
+                break
+            if t == len(pop[i]):
+                pop[i].append(np.random.randint(0,18))
+            commandstart(pop[i][t])
+            time.sleep(5/60)
+            commandend(pop[i][t])
+            t += 1
 
-#適応度に応じて選択
-def selection():
-    pass
+
+#適応度に応じて選択(出力はインデックス)
+def selection(pop):
+    min = 0
+    list_fitness = list()
+    list_index = list()
+    selected = list()
+    #適応度が高いものを10個体並べる
+    for i in range(len(pop)):
+        if len(pop[i]) > min:
+            list_fitness.append(len(pop[i]))
+            list_index.append(i)
+        if len(list_fitness) > 10:
+            index = np.argmin(list_fitness)
+            list_fitness.pop(index)
+            list_index.pop(index)
+    #適応度が高い10個体からランダムに2個体選ぶ
+    selected = random.sample(list_index, 2)
+    print("Selection Done")
+    return selected
 
 #選択された個体を使って交叉
-def crossover():
-    pass
+def crossover(pop, selected):
+    #2個体の長さ(適応度を揃える)
+    next_gen = [[0]*len(pop[0]) for i in range(30)]
+    left = selected[0]
+    right = selected[1]
+    print(selected)
+    while len(pop[left]) != len(pop[right]):
+        if len(pop[left]) < len(pop[right]):
+            pop[left].append(np.random.randint(0, 18))
+        elif len(pop[left]) > len(pop[right]):
+            pop[right].append(np.random.randint(0, 18))
+    #二点交叉
+    for i in range(0, 20, 2):
+        crossover_point= [0]*2
+        #交叉する位置を選ぶ
+        crossover_point[0] = random.randint(1, (len(pop[i])-2))
+        crossover_point[1] = random.randint((crossover_point[0]+1), (len(pop[i])-1))
+        print("crossover_point", crossover_point)
+        next_gen[i] = pop[left]
+        next_gen[i+1] = pop[right]
+        next_gen[i][crossover_point[0]:crossover_point[1]], next_gen[i+1][crossover_point[0]:crossover_point[1]] = next_gen[i+1][crossover_point[0]:crossover_point[1]], next_gen[i][crossover_point[0]:crossover_point[1]]
+    print("Crossover Done")
+    return next_gen
+    #一様交叉
 
 #変異
-def mutation():
-    pass
+def mutation(pop, probability):
+    for i in range(len(pop)):
+        if random.random() <= probability:
+            print("Mutation Occured")
+            mutation_point = [0]*2
+            for j in range(1):
+                mutation_point[j] = random.randint(0, (len(pop[i])-1))
+                while mutation_point[0] == mutation_point[1]:
+                    mutation_point[1] = random.randint(0, (len(pop[i])-1))
+            pop[i][mutation_point[0]], pop[i][mutation_point[1]] = pop[i][mutation_point[1]], pop[i][mutation_point[0]]
+    print("Mutation Done")
+    return pop
 
 def population_save(file_name, pop):
     np.save(file_name, pop)
 
 def main():
-    LOAD = 1
+    LOAD = 0
+    NUMBER_POPULATION = 30
+    INITIAL_LENGTH = 10
+    MUTATION_PROBABILITY = 0.01
     pop = list()
+    selected = list()
     try:
+        gen = 0
         if LOAD >= 1:
             pop = initial_population_load()
             print(pop)
         else:
-            pop = initiral_population(5, 10)
+            pop = initiral_population(NUMBER_POPULATION, INITIAL_LENGTH)
             print(pop)
-        fitness_func()
-        selection()
-        crossover()
-        mutation()
-        population_save("population", pop)
+        while True:
+            fitness_func(pop)
+            selected = selection(pop)
+            next_gen = crossover(pop, selected)
+            next_gen = mutation(next_gen, MUTATION_PROBABILITY)
+            print(next_gen)
+            pop = next_gen
+            gen += 1
+            #5世代ごとに保存
+            if gen%5 == 0:
+                population_save("population", pop)
     except KeyboardInterrupt:
         sys.exit()
 
