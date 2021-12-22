@@ -17,3 +17,6 @@ https://confit.atlas.jp/guide/event-img/jsai2018/3Pin1-34/public/pdf?type=in
 https://dse-souken.com/2021/05/25/ai-19/
 https://horomary.hatenablog.com/entry/2019/03/10/190919
 　→特殊な方法になりそうなのでスクラッチで書いた方が早いかも
+
+https://python.atelierkobato.com/npsave/
+　→ファイルの書き込み、読み込みで参考に

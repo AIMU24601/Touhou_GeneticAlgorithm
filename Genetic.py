@@ -1,8 +1,9 @@
 import ctypes
 import random
-from typing_extensions import ParamSpecArgs
 import cv2
 import pynput
+import sys
+import numpy as np
 
 from PIL import ImageGrab
 
@@ -168,14 +169,16 @@ def commandend(action):
         releasekey(0xcb)#LEFT
 
 #最初の個体を生成
-def initiral_population():
-    pass
+def initiral_population(num, length):
+    pop = np.random.randint(0, 18, (num, length))
+    return pop
 
 #保存された個体をロード
 def initial_population_load():
-    pass
+    pop = np.load("population.npy")
+    return pop
 
-#適応度を計算
+#適応度を計算＋差分の写真をとって保存
 def fitness_func():
     pass
 
@@ -190,3 +193,27 @@ def crossover():
 #変異
 def mutation():
     pass
+
+def population_save(file_name, pop):
+    np.save(file_name, pop)
+
+def main():
+    LOAD = 1
+    pop = list()
+    try:
+        if LOAD >= 1:
+            pop = initial_population_load()
+            print(pop)
+        else:
+            pop = initiral_population(5, 10)
+            print(pop)
+        fitness_func()
+        selection()
+        crossover()
+        mutation()
+        population_save("population", pop)
+    except KeyboardInterrupt:
+        sys.exit()
+
+if __name__ == "__main__":
+    main()
