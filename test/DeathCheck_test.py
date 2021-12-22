@@ -105,6 +105,12 @@ print("saved")
 #match_result = cv2.matchTemplate(img, img_sent, cv2.TM_CCOEFF_NORMED)
 match_result = cv2.matchTemplate(img_enter, img_temp, cv2.TM_CCOEFF_NORMED)
 
+img1 = cv2.imread("img1.jpg")
+img_1 = cv2.imread("conti.png")
+img_e = img1
+img_con = img_1
+res = cv2.matchTemplate(img_e, img_con, cv2.TM_CCOEFF_NORMED)
+
 """
 print(np.shape(img))
 print(np.shape(img_g))
@@ -130,13 +136,18 @@ h, w, c = img_P_4.shape
 min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match_result)
 print(min_val, max_val, min_loc, max_loc)
 
+"""
 locs = np.column_stack(np.where(match_result>=threshold))
 print(np.where(match_result>=threshold))
+"""
+locs = np.column_stack(np.where(res>=threshold))
+print(np.where(res>=threshold))
 print(locs)
 
 fig, ax = plt.subplots(facecolor="w")
 for y, x in locs:
     ax.add_patch(plt.Rectangle((x, y), w, h, ec="r", lw=2., fc="none"))
-ax.imshow(cv2.cvtColor(img_enter, cv2.COLOR_BGR2RGB))
+#ax.imshow(cv2.cvtColor(img_enter, cv2.COLOR_BGR2RGB))
+ax.imshow(cv2.cvtColor(img1, cv2.COLOR_BGR2RGB))
 
 plt.show()

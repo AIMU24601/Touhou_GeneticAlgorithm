@@ -1,6 +1,6 @@
 import ctypes
 import random
-from time import time
+import time
 import cv2
 from numpy import core
 from numpy.lib.function_base import select
@@ -175,7 +175,7 @@ def commandend(action):
 
 #被弾確認用
 def Deathchack():
-    DEATHCHECK_FILE = "Death.png"
+    DEATHCHECK_FILE = "continue.png"
     IMG_D = cv2.imread(DEATHCHECK_FILE, cv2.IMREAD_COLOR) #被弾確認用
     X = 284
     Y = 290
@@ -209,14 +209,15 @@ def fitness_func(pop):
     for i in range(len(pop)):
         t = 0
         Done = False
-        while False:
+        while True:
             Done = Deathchack()
             if Done:
+                print("Break")
                 break
             if t == len(pop[i]):
-                pop[i].append(np.random.randint(0,18))
+                pop[i] = np.append(pop[i], np.random.randint(0,18))
             commandstart(pop[i][t])
-            time.sleep(5/60)
+            time.sleep(30/60)
             commandend(pop[i][t])
             t += 1
 
@@ -295,10 +296,14 @@ def main():
         gen = 0
         if LOAD >= 1:
             pop = initial_population_load()
-            print(pop)
+            print("Population loaded")
         else:
             pop = initiral_population(NUMBER_POPULATION, INITIAL_LENGTH)
-            print(pop)
+            print("Initial Population spawned")
+        time.sleep(1)
+        commandstart(-1)
+        time.sleep(1/60)
+        commandend(-1)
         while True:
             fitness_func(pop)
             selected = selection(pop)
