@@ -199,28 +199,68 @@ def initiral_population(num, length):
     return pop
 
 #保存された個体をロード
-def initial_population_load():
-    pop = np.load("population.npy")
+def initial_population_load(file_name):
+    pop = np.load(file_name)
     return pop
 
 #適応度を計算＋差分の写真をとって保存
 def fitness_func(pop):
-    Done = False
+    pop = pop.tolist()
     for i in range(len(pop)):
         t = 0
         Done = False
+        presskey(0x2c)#pressZ
         while True:
             Done = Deathchack()
             if Done:
-                print("Break")
-                break
+                #リトライ用処理
+                releasekey(0x2c)#releaseZ
+                time.sleep(30/60)
+                presskey(0x2c)
+                time.sleep(1/60)
+                releasekey(0x2c)#コンテニューでいいえ
+                time.sleep(3)
+                presskey(0x2c)
+                time.sleep(1/60)
+                releasekey(0x2c)#あなたの腕前から次へ
+                time.sleep(90/60)
+                presskey(0xcd)#RIGHT
+                time.sleep(1)
+                releasekey(0xcd)#RIGHT
+                #time.sleep(1/60)
+                presskey(0x2c)
+                time.sleep(1/60)
+                releasekey(0x2c)#リプレイ保存でいいえ
+                time.sleep(90/60)
+                presskey(0x2c)
+                time.sleep(1/60)
+                releasekey(0x2c)#Start
+                print("1")
+                time.sleep(90/60)
+                presskey(0x2c)
+                time.sleep(1/60)
+                releasekey(0x2c)#入門を押す
+                print("2")
+                time.sleep(90/60)
+                presskey(0x2c)
+                time.sleep(1/60)
+                releasekey(0x2c)#自機選択
+                print("3")
+                time.sleep(90/60)
+                presskey(0x2c)
+                time.sleep(1/60)
+                releasekey(0x2c)#装備選択
+                print("4")
+                #ここまででリスタート
             if t == len(pop[i]):
-                pop[i] = np.append(pop[i], np.random.randint(0,18))
+                #pop[i] = np.append(pop[i], np.random.randint(0,18))
+                pop[i].append(random.randint(0,18))
             commandstart(pop[i][t])
-            time.sleep(30/60)
+            time.sleep(15/60)
             commandend(pop[i][t])
             t += 1
-
+    pop = np.array(pop)
+    return pop
 
 #適応度に応じて選択(出力はインデックス)
 def selection(pop):
@@ -255,7 +295,7 @@ def crossover(pop, selected):
         elif len(pop[left]) > len(pop[right]):
             pop[right].append(np.random.randint(0, 18))
     #二点交叉
-    for i in range(0, 20, 2):
+    for i in range(0, 30, 2):
         crossover_point= [0]*2
         #交叉する位置を選ぶ
         crossover_point[0] = random.randint(1, (len(pop[i])-2))
@@ -295,7 +335,7 @@ def main():
     try:
         gen = 0
         if LOAD >= 1:
-            pop = initial_population_load()
+            pop = initial_population_load("population.npy")
             print("Population loaded")
         else:
             pop = initiral_population(NUMBER_POPULATION, INITIAL_LENGTH)
@@ -305,9 +345,10 @@ def main():
         time.sleep(1/60)
         commandend(-1)
         while True:
-            fitness_func(pop)
-            selected = selection(pop)
-            next_gen = crossover(pop, selected)
+            pop_tmp = list()
+            pop_tmp = fitness_func(pop)
+            selected = selection(pop_tmp)
+            next_gen = crossover(pop_tmp, selected)
             next_gen = mutation(next_gen, MUTATION_PROBABILITY)
             print(next_gen)
             pop = next_gen
@@ -315,6 +356,7 @@ def main():
             #5世代ごとに保存
             if gen%5 == 0:
                 population_save("population", pop)
+            print("Generation: {}".format(gen))
     except KeyboardInterrupt:
         sys.exit()
 
