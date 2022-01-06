@@ -207,22 +207,26 @@ def initial_population_load(file_name):
 def fitness_func(pop):
     pop = pop.tolist()
     for i in range(len(pop)):
+        print("Population: {}".format(i))
         t = 0
         Done = False
         presskey(0x2c)#pressZ
         while True:
             Done = Deathchack()
             if Done:
+                print("timestep: {}".format(t))
                 #リトライ用処理
                 releasekey(0x2c)#releaseZ
                 time.sleep(30/60)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#コンテニューでいいえ
+                print("いいえ")
                 time.sleep(3)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#あなたの腕前から次へ
+                print("腕前")
                 time.sleep(90/60)
                 presskey(0xcd)#RIGHT
                 time.sleep(1)
@@ -231,29 +235,29 @@ def fitness_func(pop):
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#リプレイ保存でいいえ
+                print("リプレイ")
                 time.sleep(90/60)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#Start
-                print("1")
                 time.sleep(90/60)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#入門を押す
-                print("2")
+                print("入門")
                 time.sleep(90/60)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#自機選択
-                print("3")
+                print("自機選択")
                 time.sleep(90/60)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#装備選択
-                print("4")
+                print("装備選択")
                 #ここまででリスタート
+                break
             if t == len(pop[i]):
-                #pop[i] = np.append(pop[i], np.random.randint(0,18))
                 pop[i].append(random.randint(0,18))
             commandstart(pop[i][t])
             time.sleep(15/60)
@@ -284,7 +288,7 @@ def selection(pop):
 
 #選択された個体を使って交叉
 def crossover(pop, selected):
-    #2個体の長さ(適応度を揃える)
+    #2個体の長さ(適応度)を揃える
     next_gen = [[0]*len(pop[0]) for i in range(30)]
     left = selected[0]
     right = selected[1]
@@ -355,7 +359,8 @@ def main():
             gen += 1
             #5世代ごとに保存
             if gen%5 == 0:
-                population_save("population", pop)
+                population_save("population_gen_" + str(gen), pop)
+                print("Population saved")
             print("Generation: {}".format(gen))
     except KeyboardInterrupt:
         sys.exit()
