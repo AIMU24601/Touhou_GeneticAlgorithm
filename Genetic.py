@@ -229,17 +229,18 @@ def fitness_func(pop):
                 print("腕前")
                 time.sleep(90/60)
                 presskey(0xcd)#RIGHT
-                time.sleep(1)
+                time.sleep(1/60)
                 releasekey(0xcd)#RIGHT
-                #time.sleep(1/60)
+                time.sleep(10/60)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#リプレイ保存でいいえ
                 print("リプレイ")
-                time.sleep(90/60)
+                time.sleep(2)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#Start
+                print("Start")
                 time.sleep(90/60)
                 presskey(0x2c)
                 time.sleep(1/60)
@@ -274,9 +275,8 @@ def selection(pop):
     selected = list()
     #適応度が高いものを10個体並べる
     for i in range(len(pop)):
-        if len(pop[i]) > min:
-            list_fitness.append(len(pop[i]))
-            list_index.append(i)
+        list_fitness.append(len(pop[i]))
+        list_index.append(i)
         if len(list_fitness) > 10:
             index = np.argmin(list_fitness)
             list_fitness.pop(index)
@@ -287,26 +287,32 @@ def selection(pop):
     return selected
 
 #選択された個体を使って交叉
-def crossover(pop, selected):
+def crossover(pop, selected, pop_len):
     #2個体の長さ(適応度)を揃える
-    next_gen = [[0]*len(pop[0]) for i in range(30)]
     left = selected[0]
     right = selected[1]
-    print(selected)
+    print("Selected: {}".format(selected))
+    #次世代格納用変数
+    if len(pop[left]) < len(pop[right]):
+        next_gen = [[0]*len(pop[right]) for i in range(pop_len)]
+    else:
+        next_gen = [[0]*len(pop[left]) for i in range(pop_len)]
+    #個体の長さが等しくなるように調整
     while len(pop[left]) != len(pop[right]):
         if len(pop[left]) < len(pop[right]):
             pop[left].append(np.random.randint(0, 18))
         elif len(pop[left]) > len(pop[right]):
             pop[right].append(np.random.randint(0, 18))
     #二点交叉
-    for i in range(0, 30, 2):
+    for i in range(0, pop_len, 2):
         crossover_point= [0]*2
         #交叉する位置を選ぶ
-        crossover_point[0] = random.randint(1, (len(pop[i])-2))
-        crossover_point[1] = random.randint((crossover_point[0]+1), (len(pop[i])-1))
-        print("crossover_point", crossover_point)
+        crossover_point[0] = random.randint(1, (len(pop[left])-2))
+        crossover_point[1] = random.randint((crossover_point[0]+1), (len(pop[left])-1))
+        print("crossover_point: {}".format(crossover_point))
         next_gen[i] = pop[left]
         next_gen[i+1] = pop[right]
+        #交叉
         next_gen[i][crossover_point[0]:crossover_point[1]], next_gen[i+1][crossover_point[0]:crossover_point[1]] = next_gen[i+1][crossover_point[0]:crossover_point[1]], next_gen[i][crossover_point[0]:crossover_point[1]]
     print("Crossover Done")
     return next_gen
@@ -331,7 +337,7 @@ def population_save(file_name, pop):
 
 def main():
     LOAD = 0
-    NUMBER_POPULATION = 30
+    NUMBER_POPULATION = 2 #二点交叉を行うので必ず偶数にすること
     INITIAL_LENGTH = 10
     MUTATION_PROBABILITY = 0.01
     pop = list()
@@ -349,19 +355,20 @@ def main():
         time.sleep(1/60)
         commandend(-1)
         while True:
+            print("Generation: {}".format(gen))
             pop_tmp = list()
             pop_tmp = fitness_func(pop)
             selected = selection(pop_tmp)
-            next_gen = crossover(pop_tmp, selected)
+            next_gen = crossover(pop_tmp, selected, NUMBER_POPULATION)
             next_gen = mutation(next_gen, MUTATION_PROBABILITY)
             print(next_gen)
             pop = next_gen
+            pop = np.array(pop)
             gen += 1
             #5世代ごとに保存
             if gen%5 == 0:
                 population_save("population_gen_" + str(gen), pop)
                 print("Population saved")
-            print("Generation: {}".format(gen))
     except KeyboardInterrupt:
         sys.exit()
 
