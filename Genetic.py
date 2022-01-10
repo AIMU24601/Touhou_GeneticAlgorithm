@@ -192,6 +192,24 @@ def Deathchack():
     else:
         return False
 
+def RetryCheck():
+    #あなたの腕前の画面に遷移しているかの確認
+    RETRYCHECKFILE = "udemae.png"
+    IMG_R = cv2.imread(RETRYCHECKFILE, cv2.IMREAD_COLOR)
+    X = 284
+    Y = 290
+    W = 670
+    H = 740 #撮影の座標指定
+    img = ImageGrab.grab((X, Y, W, H))
+    img = np.asarray(img, dtype="uint8")
+    img_1 = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    match_result_r = cv2.matchTemplate(img_1, IMG_R, cv2.TM_CCOEFF_NORMED)
+    retry_check = np.column_stack(np.where(match_result_r >= 0.75))
+    if len(retry_check) >= 1:
+        return True
+    else:
+        return False
+
 #最初の個体を生成
 def initiral_population(num, length):
     #0~17までの行動をランダムに生成
@@ -210,6 +228,7 @@ def fitness_func(pop):
         print("Population: {}".format(i))
         t = 0
         Done = False
+        Retry_check = False
         presskey(0x2c)#pressZ
         while True:
             Done = Deathchack()
@@ -217,7 +236,13 @@ def fitness_func(pop):
                 print("timestep: {}".format(t))
                 #リトライ用処理
                 releasekey(0x2c)#releaseZ
-                time.sleep(30/60)
+                time.sleep(1)
+                while Retry_check:
+                    Retry_check = RetryCheck()
+                    presskey(0x2c)
+                    time.sleep(1/60)
+                    releasekey(0x2c)
+                    time.sleep(1)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#コンテニューでいいえ
@@ -336,10 +361,12 @@ def population_save(file_name, pop):
     np.save(file_name, pop)
 
 def main():
-    LOAD = 0
-    NUMBER_POPULATION = 2 #二点交叉を行うので必ず偶数にすること
+    #パラメーターの設定
+    LOAD = 0 #1以上でON
+    NUMBER_POPULATION = 30 #二点交叉を行うので必ず偶数にすること
     INITIAL_LENGTH = 10
     MUTATION_PROBABILITY = 0.01
+
     pop = list()
     selected = list()
     try:
