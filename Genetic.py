@@ -222,8 +222,9 @@ def initial_population_load(file_name):
     return pop
 
 #適応度を計算＋差分の写真をとって保存
-def fitness_func(pop):
+def fitness_func(pop, statistics):
     pop = pop.tolist()
+    s = 0
     for i in range(len(pop)):
         print("Population: {}".format(i))
         t = 0
@@ -234,6 +235,7 @@ def fitness_func(pop):
             Done = Deathchack()
             if Done:
                 print("timestep: {}".format(t))
+                s += t
                 #リトライ用処理
                 releasekey(0x2c)#releaseZ
                 time.sleep(1)
@@ -289,6 +291,9 @@ def fitness_func(pop):
             time.sleep(15/60)
             commandend(pop[i][t])
             t += 1
+        print("average_timestep: {}".format(s/(i+1)))
+    if statistics == 1:
+        np.save("statistics", (s/len(pop)))
     pop = np.array(pop)
     return pop
 
@@ -373,9 +378,10 @@ def main():
     #パラメーターの設定
     LOAD = 0 #1でON
     LOAD_DATA = "population.npy" #ndarray型で保存されてます
-    NUMBER_POPULATION = 3 #必ず3の倍数かつ偶数にすること
+    NUMBER_POPULATION = 3 #必ず3の倍数にすること
     INITIAL_LENGTH = 10
     MUTATION_PROBABILITY = 0.01
+    STATISTICS = 1 #世代数の保存の有無
 
     pop = list()
     selected = list()
@@ -386,7 +392,7 @@ def main():
             print("Population loaded")
         else:
             pop = initiral_population(NUMBER_POPULATION, INITIAL_LENGTH)
-            print("Initial Population spawned")
+            print("Initial Population Spawned")
         time.sleep(1)
         commandstart(-1)
         time.sleep(1/60)
@@ -394,7 +400,7 @@ def main():
         while True:
             print("Generation: {}".format(gen))
             pop_tmp = list()
-            pop_tmp = fitness_func(pop)
+            pop_tmp = fitness_func(pop, STATISTICS)
             selected = selection(pop_tmp)
             next_gen = crossover(pop_tmp, selected, NUMBER_POPULATION)
             next_gen = mutation(next_gen, MUTATION_PROBABILITY)
