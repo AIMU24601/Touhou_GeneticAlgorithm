@@ -328,8 +328,8 @@ def crossover(pop, selected, pop_len):
             pop[left].append(np.random.randint(0, 18))
         elif len(pop[left]) > len(pop[right]):
             pop[right].append(np.random.randint(0, 18))
-    #二点交叉
-    for i in range(0, pop_len, 2):
+    for i in range(0, pop_len, 3):
+        #二点交叉
         crossover_point= [0]*2
         #交叉する位置を選ぶ
         crossover_point[0] = random.randint(1, (len(pop[left])-2))
@@ -339,9 +339,18 @@ def crossover(pop, selected, pop_len):
         next_gen[i+1] = pop[right]
         #交叉
         next_gen[i][crossover_point[0]:crossover_point[1]], next_gen[i+1][crossover_point[0]:crossover_point[1]] = next_gen[i+1][crossover_point[0]:crossover_point[1]], next_gen[i][crossover_point[0]:crossover_point[1]]
+    #一様交叉
+        #引き継ぐ個体の遺伝子を決定
+        crossover_pop = [random.randint(0, 1) for j in range(len(next_gen[i]))]
+        print("crossover: {}".format(crossover_pop))
+        for j in range(len(next_gen[i])):
+            #交叉
+            if crossover_pop[j] == 0:
+                next_gen[i+2][j] = pop[left][j]
+            else:
+                next_gen[i+2][j] = pop[right][j]
     print("Crossover Done")
     return next_gen
-    #一様交叉
 
 #変異
 def mutation(pop, probability):
@@ -362,8 +371,9 @@ def population_save(file_name, pop):
 
 def main():
     #パラメーターの設定
-    LOAD = 0 #1以上でON
-    NUMBER_POPULATION = 30 #二点交叉を行うので必ず偶数にすること
+    LOAD = 0 #1でON
+    LOAD_DATA = "population.npy" #ndarray型で保存されてます
+    NUMBER_POPULATION = 3 #必ず3の倍数かつ偶数にすること
     INITIAL_LENGTH = 10
     MUTATION_PROBABILITY = 0.01
 
