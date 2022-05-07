@@ -222,16 +222,16 @@ def initial_population_load(file_name):
     return pop
 
 #適応度を計算＋差分の写真をとって保存
-def fitness_func(pop, statistics):
+def fitness_func(pop):
     pop = pop.tolist()
     s = 0
     for i in range(len(pop)):
-        print("Population: {}".format(i))
+        print("Population: {}".format(i+1))
         t = 0
         Done = False
         Retry_check = False
-        presskey(0x2c)#pressZ
         while True:
+            presskey(0x2c)#pressZ
             Done = Deathchack()
             if Done:
                 print("timestep: {}".format(t))
@@ -248,12 +248,12 @@ def fitness_func(pop, statistics):
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#コンテニューでいいえ
-                print("いいえ")
+                #print("いいえ")
                 time.sleep(3)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#あなたの腕前から次へ
-                print("腕前")
+                #print("腕前")
                 time.sleep(90/60)
                 presskey(0xcd)#RIGHT
                 time.sleep(1/60)
@@ -262,38 +262,37 @@ def fitness_func(pop, statistics):
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#リプレイ保存でいいえ
-                print("リプレイ")
+                #print("リプレイ")
                 time.sleep(2)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#Start
-                print("Start")
+                #print("Start")
                 time.sleep(90/60)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#入門を押す
-                print("入門")
+                #print("入門")
                 time.sleep(90/60)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#自機選択
-                print("自機選択")
+                #print("自機選択")
                 time.sleep(90/60)
                 presskey(0x2c)
                 time.sleep(1/60)
                 releasekey(0x2c)#装備選択
-                print("装備選択")
-                #ここまででリスタート
+                #print("装備選択")
+                #ここまでリトライ処理
                 break
             if t == len(pop[i]):
                 pop[i].append(random.randint(0,18))
             commandstart(pop[i][t])
             time.sleep(15/60)
             commandend(pop[i][t])
+            releasekey(0x2c)#releaseZ
             t += 1
         print("average_timestep: {}".format(s/(i+1)))
-    if statistics == 1:
-        np.save("statistics", (s/len(pop)))
     pop = np.array(pop)
     return pop
 
@@ -344,10 +343,9 @@ def crossover(pop, selected, pop_len):
         next_gen[i+1] = pop[right]
         #交叉
         next_gen[i][crossover_point[0]:crossover_point[1]], next_gen[i+1][crossover_point[0]:crossover_point[1]] = next_gen[i+1][crossover_point[0]:crossover_point[1]], next_gen[i][crossover_point[0]:crossover_point[1]]
-    #一様交叉
+        #一様交叉
         #引き継ぐ個体の遺伝子を決定
         crossover_pop = [random.randint(0, 1) for j in range(len(next_gen[i]))]
-        print("crossover: {}".format(crossover_pop))
         for j in range(len(next_gen[i])):
             #交叉
             if crossover_pop[j] == 0:
@@ -377,18 +375,17 @@ def population_save(file_name, pop):
 def main():
     #パラメーターの設定
     LOAD = 0 #1でON
-    LOAD_DATA = "population.npy" #ndarray型で保存されてます
-    NUMBER_POPULATION = 3 #必ず3の倍数にすること
+    LOAD_DATA = "population_gen_5.npy" #ndarray型で保存されてます
+    NUMBER_POPULATION = 30 #必ず3の倍数にすること
     INITIAL_LENGTH = 10
     MUTATION_PROBABILITY = 0.01
-    STATISTICS = 1 #世代数の保存の有無
 
     pop = list()
     selected = list()
     try:
-        gen = 0
+        gen = 1
         if LOAD >= 1:
-            pop = initial_population_load("population.npy")
+            pop = initial_population_load(LOAD_DATA)
             print("Population loaded")
         else:
             pop = initiral_population(NUMBER_POPULATION, INITIAL_LENGTH)
@@ -400,16 +397,15 @@ def main():
         while True:
             print("Generation: {}".format(gen))
             pop_tmp = list()
-            pop_tmp = fitness_func(pop, STATISTICS)
+            pop_tmp = fitness_func(pop)
             selected = selection(pop_tmp)
             next_gen = crossover(pop_tmp, selected, NUMBER_POPULATION)
             next_gen = mutation(next_gen, MUTATION_PROBABILITY)
-            print(next_gen)
             pop = next_gen
-            pop = np.array(pop)
+            pop = np.array(pop) #型をlistからndarrayに変換
             gen += 1
-            #5世代ごとに保存
-            if gen%5 == 0:
+            #10世代ごとに保存
+            if gen%10 == 0:
                 population_save("population_gen_" + str(gen), pop)
                 print("Population saved")
     except KeyboardInterrupt:
