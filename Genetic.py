@@ -368,7 +368,7 @@ def main():
     #パラメーターの設定
     LOAD = 0 #1でON
     LOAD_DATA = "population_gen_3.npy" #ndarray型で保存されてます
-    NUMBER_POPULATION = 30 #必ず3の倍数にすること、ロードする場合ロードしたデータとここの数字を合わせること
+    NUMBER_POPULATION = 3 #必ず3の倍数にすること、ロードする場合ロードしたデータとここの数字を合わせること
     INITIAL_LENGTH = 10
     MUTATION_PROBABILITY = 0.01
 
@@ -382,7 +382,6 @@ def main():
         else:
             pop = initiral_population(NUMBER_POPULATION, INITIAL_LENGTH)
             print("Initial Population Spawned")
-        print(pop)
         time.sleep(1)
         commandstart(-1)
         time.sleep(1/60)
@@ -401,18 +400,20 @@ def main():
             if gen%1 == 0:
                 stats_mean = 0
                 stats_sd = 0
+                stats = [0]*2
                 for i in range(len(pop_tmp)):
                     stats_mean += len(pop_tmp[i])
                 stats_mean = stats_mean/len(pop_tmp)
                 for i in range(len(pop_tmp)):
                     stats_sd += (len(pop_tmp[i])-stats_mean)**2
                 stats_sd = (stats_sd/len(pop_tmp))**(1/2)
+                stats[0] = stats_mean
+                stats[1] = stats_sd
                 population_save("population_gen_" + str(gen), pop)
                 print("Population saved")
-                print("stats_mean")
-                print(stats_mean)
-                print("stats_sd")
-                print(stats_sd)
+                print("Average_timestep: {}".format(stats_mean))
+                print("Timestep_standard_deviation: {}".format(stats_sd))
+                np.save("stats_gen_" + str(gen), stats)
     except KeyboardInterrupt:
         sys.exit()
 
