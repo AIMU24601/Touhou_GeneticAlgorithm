@@ -296,8 +296,8 @@ def fitness_func(pop):
     pop = np.array(pop)
     return pop
 
-#適応度に応じて選択(出力はインデックス)
-def selection(pop):
+#選択された個体を使って交叉
+def selection_and_crossover(pop, selected, pop_len):
     min = 0
     list_fitness = list()
     list_index = list()
@@ -310,31 +310,23 @@ def selection(pop):
             index = np.argmin(list_fitness)
             list_fitness.pop(index)
             list_index.pop(index)
-    #適応度が高い10個体からランダムに2個体選ぶ
-    selected = random.sample(list_index, 2)
-    print("Selection Done")
-    return selected
-
-#選択された個体を使って交叉
-def crossover(pop, selected, pop_len):
-    #2個体の長さ(適応度)を揃える
-    left = selected[0]
-    right = selected[1]
-    print("Selected: {}".format(selected))
+    max_index = np.argmax(list_fitness)
     #次世代格納用変数
-    if len(pop[left]) < len(pop[right]):
-        next_gen = [[0]*len(pop[right]) for i in range(pop_len)]
-    else:
-        next_gen = [[0]*len(pop[left]) for i in range(pop_len)]
-    #個体の長さが等しくなるように調整
-    while len(pop[left]) != len(pop[right]):
-        if len(pop[left]) < len(pop[right]):
-            pop[left].append(np.random.randint(0, 18))
-        elif len(pop[left]) > len(pop[right]):
-            pop[right].append(np.random.randint(0, 18))
-    for i in range(0, pop_len, 3):
+    next_gen = [[0]*len(pop[max_index]) for i in range(pop_len)]
+    for i in range(0, len(pop), 3):
+        selected = random.sample(list_index, 2)
+        left = selected[0]
+        right = selected[1]
+        print("Selected: {}".format(selected))
+        #2個体の長さ(適応度)を揃える
+        #個体の長さが等しくなるように調整
+        while len(pop[left]) != len(pop[right]):
+            if len(pop[left]) < len(pop[right]):
+                pop[left].append(np.random.randint(0, 18))
+            elif len(pop[left]) > len(pop[right]):
+                pop[right].append(np.random.randint(0, 18))
         #二点交叉
-        crossover_point= [0]*2
+        crossover_point = [0]*2
         #交叉する位置を選ぶ
         crossover_point[0] = random.randint(1, (len(pop[left])-2))
         crossover_point[1] = random.randint((crossover_point[0]+1), (len(pop[left])-1))
@@ -375,21 +367,22 @@ def population_save(file_name, pop):
 def main():
     #パラメーターの設定
     LOAD = 0 #1でON
-    LOAD_DATA = "population_gen_5.npy" #ndarray型で保存されてます
-    NUMBER_POPULATION = 30 #必ず3の倍数にすること
+    LOAD_DATA = "population_gen_3.npy" #ndarray型で保存されてます
+    NUMBER_POPULATION = 30 #必ず3の倍数にすること、ロードする場合ロードしたデータとここの数字を合わせること
     INITIAL_LENGTH = 10
     MUTATION_PROBABILITY = 0.01
 
     pop = list()
     selected = list()
     try:
-        gen = 1
+        gen = 1 #途中から始める時はここを書き換える
         if LOAD >= 1:
             pop = initial_population_load(LOAD_DATA)
             print("Population loaded")
         else:
             pop = initiral_population(NUMBER_POPULATION, INITIAL_LENGTH)
             print("Initial Population Spawned")
+        print(pop)
         time.sleep(1)
         commandstart(-1)
         time.sleep(1/60)
@@ -398,16 +391,28 @@ def main():
             print("Generation: {}".format(gen))
             pop_tmp = list()
             pop_tmp = fitness_func(pop)
-            selected = selection(pop_tmp)
-            next_gen = crossover(pop_tmp, selected, NUMBER_POPULATION)
+            next_gen = selection_and_crossover(pop_tmp, selected, NUMBER_POPULATION)
             next_gen = mutation(next_gen, MUTATION_PROBABILITY)
             pop = next_gen
             pop = np.array(pop) #型をlistからndarrayに変換
             gen += 1
-            #10世代ごとに保存
-            if gen%10 == 0:
+            #各世代の適応度の平均と標準偏差を計算
+            #1世代30分ぐらいかかるので毎回保存
+            if gen%1 == 0:
+                stats_mean = 0
+                stats_sd = 0
+                for i in range(len(pop_tmp)):
+                    stats_mean += len(pop_tmp[i])
+                stats_mean = stats_mean/len(pop_tmp)
+                for i in range(len(pop_tmp)):
+                    stats_sd += (len(pop_tmp[i])-stats_mean)**2
+                stats_sd = (stats_sd/len(pop_tmp))**(1/2)
                 population_save("population_gen_" + str(gen), pop)
                 print("Population saved")
+                print("stats_mean")
+                print(stats_mean)
+                print("stats_sd")
+                print(stats_sd)
     except KeyboardInterrupt:
         sys.exit()
 
