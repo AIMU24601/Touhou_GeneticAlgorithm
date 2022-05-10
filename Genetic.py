@@ -312,7 +312,9 @@ def selection_and_crossover(pop, selected, pop_len):
             list_index.pop(index)
     max_index = np.argmax(list_fitness)
     #次世代格納用変数
-    next_gen = [[0]*len(pop[max_index]) for i in range(pop_len)]
+    #各世代で最も適応度の高い個体と同じ長さでゼロ埋めする
+    #list_fitnessが最も高い個体のlist_indexを取ってきている
+    next_gen = [[0]*len(pop[list_index[max_index]]) for i in range(pop_len)]
     for i in range(0, len(pop), 3):
         selected = random.sample(list_index, 2)
         left = selected[0]
@@ -337,8 +339,8 @@ def selection_and_crossover(pop, selected, pop_len):
         next_gen[i][crossover_point[0]:crossover_point[1]], next_gen[i+1][crossover_point[0]:crossover_point[1]] = next_gen[i+1][crossover_point[0]:crossover_point[1]], next_gen[i][crossover_point[0]:crossover_point[1]]
         #一様交叉
         #引き継ぐ個体の遺伝子を決定
-        crossover_pop = [random.randint(0, 1) for j in range(len(next_gen[i]))]
-        for j in range(len(next_gen[i])):
+        crossover_pop = [random.randint(0, 1) for j in range(len(pop[left]))]
+        for j in range(len(crossover_pop)):
             #交叉
             if crossover_pop[j] == 0:
                 next_gen[i+2][j] = pop[left][j]
@@ -368,7 +370,7 @@ def main():
     #パラメーターの設定
     LOAD = 0 #1でON
     LOAD_DATA = "population_gen_3.npy" #ndarray型で保存されてます
-    NUMBER_POPULATION = 3 #必ず3の倍数にすること、ロードする場合ロードしたデータとここの数字を合わせること
+    NUMBER_POPULATION = 12 #必ず3の倍数にすること、ロードする場合ロードしたデータとここの数字を合わせること
     INITIAL_LENGTH = 10
     MUTATION_PROBABILITY = 0.01
 
@@ -413,7 +415,7 @@ def main():
                 print("Population saved")
                 print("Average_timestep: {}".format(stats_mean))
                 print("Timestep_standard_deviation: {}".format(stats_sd))
-                np.save("stats_gen_" + str(gen), stats)
+                np.save("stats_gen_" + str(gen-1), stats)
     except KeyboardInterrupt:
         sys.exit()
 
