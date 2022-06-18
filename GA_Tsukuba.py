@@ -72,48 +72,6 @@ def commandstart(action):
         presskey(0xcd)#RIGHT
     elif action == 4:
         presskey(0xd0)#DOWN
-    elif action == 5:
-        presskey(0xcb)#LEFT
-        presskey(0xc8)#UP
-    elif action == 6:
-        presskey(0xc8)#UP
-        presskey(0xcd)#RIGHT
-    elif action == 7:
-        presskey(0xcd)#RIGHT
-        presskey(0xd0)#DOWN
-    elif action == 8:
-        presskey(0xd0)#DOWN
-        presskey(0xcb)#LEFT
-    elif action == 9:
-        presskey(0x2a)#LSHIFT
-    elif action == 10:
-        presskey(0x2a)#LSHIFT
-        presskey(0xcb)#LEFT
-    elif action == 11:
-        presskey(0x2a)#LSHIFT
-        presskey(0xc8)#UP
-    elif action == 12:
-        presskey(0x2a)#LSHIFT
-        presskey(0xcd)#RIGHT
-    elif action == 13:
-        presskey(0x2a)#LSHIFT
-        presskey(0xd0)#DOWN
-    elif action == 14:
-        presskey(0x2a)#LSHIFT
-        presskey(0xcb)#LEFT
-        presskey(0xc8)#UP
-    elif action == 15:
-        presskey(0x2a)#LSHIFT
-        presskey(0xc8)#UP
-        presskey(0xcd)#RIGHT
-    elif action == 16:
-        presskey(0x2a)#LSHIFT
-        presskey(0xcd)#RIGHT
-        presskey(0xd0)#DOWN
-    elif action == 17:
-        presskey(0x2a)#LSHIFT
-        presskey(0xd0)#DOWN
-        presskey(0xcb)#LEFT
 
 def commandend(action):
     if action == -1:
@@ -129,49 +87,6 @@ def commandend(action):
         releasekey(0xcd)#RIGHT
     elif action == 4:
         releasekey(0xd0)#DOWN
-    elif action == 5:
-        releasekey(0xcb)#LEFT
-        releasekey(0xc8)#UP
-    elif action == 6:
-        releasekey(0xc8)#UP
-        releasekey(0xcd)#RIGHT
-    elif action == 7:
-        releasekey(0xcd)#RIGHT
-        releasekey(0xd0)#DOWN
-    elif action == 8:
-        releasekey(0xd0)#DOWN
-        releasekey(0xcb)#LEFT
-    elif action == 9:
-        #LSHIFT
-        releasekey(0x2a)#LSHIFT
-    elif action == 10:
-        releasekey(0x2a)#LSHIFT
-        releasekey(0xcb)#LEFT
-    elif action == 11:
-        releasekey(0x2a)#LSHIFT
-        releasekey(0xc8)#UP
-    elif action == 12:
-        releasekey(0x2a)#LSHIFT
-        releasekey(0xcd)#RIGHT
-    elif action == 13:
-        releasekey(0x2a)#LSHIFT
-        releasekey(0xd0)#DOWN
-    elif action == 14:
-        releasekey(0x2a)#LSHIFT
-        releasekey(0xcb)#LEFT
-        releasekey(0xc8)#UP
-    elif action == 15:
-        releasekey(0x2a)#LSHIFT
-        releasekey(0xc8)#UP
-        releasekey(0xcd)#RIGHT
-    elif action == 16:
-        releasekey(0x2a)#LSHIFT
-        releasekey(0xcd)#RIGHT
-        releasekey(0xd0)#DOWN
-    elif action == 17:
-        releasekey(0x2a)#LSHIFT
-        releasekey(0xd0)#DOWN
-        releasekey(0xcb)#LEFT
 
 #被弾確認用
 def Deathchack():
@@ -212,8 +127,8 @@ def RetryCheck():
 
 #最初の個体を生成
 def initiral_population(num, length):
-    #0~17までの行動をランダムに生成
-    pop = np.random.randint(0, 18, (num, length))
+    #0~4までの行動をランダムに生成
+    pop = np.random.randint(0, 4, (num, length))
     return pop
 
 #保存された個体をロード
@@ -286,7 +201,17 @@ def fitness_func(pop):
                 #ここまでリトライ処理
                 break
             if t == len(pop[i]):
-                pop[i].append(random.randint(0,18))
+                action = random.random()
+                if 0 <= action <= 0.05:
+                    pop[i].append(1) #左に移動
+                elif 0.05 < action <= 0.1:
+                    pop[i].append(3) #右に移動
+                elif 0.1 < action <= 0.13:
+                    pop[i].append(2) #上に移動
+                elif 0.13 < action <= 0.16:
+                    pop[i].append(4) #下に移動
+                else:
+                    pop[i].append(0) #移動しない
             commandstart(pop[i][t])
             time.sleep(15/60)
             commandend(pop[i][t])
@@ -302,22 +227,19 @@ def selection_and_crossover(pop, selected, pop_len):
     list_fitness = list()
     list_index = list()
     selected = list()
-    #適応度が高いものを10個体並べる
+    next_gen = list()
+    #適応度が高いものを適応度とそのインデックスを対応付けて5体並べる
     for i in range(len(pop)):
         list_fitness.append(len(pop[i]))
         list_index.append(i)
-        if len(list_fitness) > 10:
+        if len(list_fitness) > 5:
             index = np.argmin(list_fitness)
             list_fitness.pop(index)
             list_index.pop(index)
     max_index = np.argmax(list_fitness)
-    #次世代格納用変数
-    #各世代で最も適応度の高い個体と同じ長さでゼロ埋めする
-    #list_fitnessが最も高い個体のlist_indexを取ってきている
-    next_gen = [[0]*len(pop[list_index[max_index]]) for i in range(pop_len)]
     print("Max index:{}".format(list_index[max_index]))
     print("Max fitness: {}".format(len(pop[list_index[max_index]])))
-    for i in range(0, len(pop), 3):
+    for i in range(0, len(pop)-1, 3):
         selected = random.sample(list_index, 2)
         left = selected[0]
         right = selected[1]
@@ -326,9 +248,12 @@ def selection_and_crossover(pop, selected, pop_len):
         #個体の長さが等しくなるように調整
         while len(pop[left]) != len(pop[right]):
             if len(pop[left]) < len(pop[right]):
-                pop[left].append(np.random.randint(0, 18))
+                pop[left].append(np.random.randint(0, 4))
             elif len(pop[left]) > len(pop[right]):
-                pop[right].append(np.random.randint(0, 18))
+                pop[right].append(np.random.randint(0, 4))
+        #次世代格納用変数
+        for j in range(3):
+            next_gen.append([0]*len(pop[left]))
         #二点交叉
         crossover_point = [0]*2
         #交叉する位置を選ぶ
@@ -349,6 +274,7 @@ def selection_and_crossover(pop, selected, pop_len):
             else:
                 next_gen[i+2][j] = pop[right][j]
     print("Crossover Done")
+    next_gen.append(pop[list_index[max_index]])
     return next_gen
 
 #変異
@@ -365,6 +291,20 @@ def mutation(pop, probability):
     print("Mutation Done")
     return pop
 
+#ホットポイントでの変異
+def hotpoint_mutation(pop, probability):
+    for i in range(len(pop)-1):
+        if random.random() <= probability:
+            print("Hot Point Mutation Occured")
+            mutation_point = -1*random.randint(1, 5)
+            #変異後の行動を選んで元の行動と異なるか調べる
+            after_mutation = random.randint(0, 4)
+            while after_mutation == pop[i][mutation_point]:
+                after_mutation = random.randint(0, 4)
+            pop[i][mutation_point] = after_mutation
+    print("Hot Point Mutation Done")
+    return pop
+
 def population_save(file_name, pop):
     np.save(file_name, pop)
 
@@ -372,9 +312,10 @@ def main():
     #パラメーターの設定
     LOAD = 0 #1でON
     LOAD_DATA = "population_gen_3.npy" #ndarray型で保存されてます
-    NUMBER_POPULATION = 30 #必ず3の倍数にすること、ロードする場合ロードしたデータとここの数字を合わせること
-    INITIAL_LENGTH = 10
+    NUMBER_POPULATION = 15 #必ず3の倍数にすること、ロードする場合ロードしたデータとここの数字を合わせること
+    INITIAL_LENGTH = 1
     MUTATION_PROBABILITY = 0.01
+    HOTPOINT_MUTATION_PROBABILITY = 0.5
 
     pop = list()
     selected = list()
@@ -396,6 +337,7 @@ def main():
             pop_tmp, stats = fitness_func(pop)
             next_gen = selection_and_crossover(pop_tmp, selected, NUMBER_POPULATION)
             next_gen = mutation(next_gen, MUTATION_PROBABILITY)
+            next_gen = hotpoint_mutation(next_gen, HOTPOINT_MUTATION_PROBABILITY)
             pop = next_gen
             pop = np.array(pop) #型をlistからndarrayに変換
             gen += 1
