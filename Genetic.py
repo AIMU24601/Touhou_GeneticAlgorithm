@@ -315,7 +315,7 @@ def selection_and_crossover(pop, selected, pop_len):
     #各世代で最も適応度の高い個体と同じ長さでゼロ埋めする
     #list_fitnessが最も高い個体のlist_indexを取ってきている
     next_gen = [[0]*len(pop[list_index[max_index]]) for i in range(pop_len)]
-    print("Max index:{}".format(list_index[max_index]))
+    print("Max index:{}".format(list_index[max_index]+1))
     print("Max fitness: {}".format(len(pop[list_index[max_index]])))
     for i in range(0, len(pop), 3):
         selected = random.sample(list_index, 2)

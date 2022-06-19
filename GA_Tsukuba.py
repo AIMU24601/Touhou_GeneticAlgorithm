@@ -237,42 +237,42 @@ def selection_and_crossover(pop, selected, pop_len):
             list_fitness.pop(index)
             list_index.pop(index)
     max_index = np.argmax(list_fitness)
-    print("Max index:{}".format(list_index[max_index]))
+    print("Max index:{}".format(list_index[max_index]+1))
     print("Max fitness: {}".format(len(pop[list_index[max_index]])))
     for i in range(0, len(pop)-1, 3):
         selected = random.sample(list_index, 2)
-        left = selected[0]
-        right = selected[1]
+        left = pop[selected[0]]
+        right = pop[selected[1]]
         print("Selected: {}".format(selected))
         #2個体の長さ(適応度)を揃える
         #個体の長さが等しくなるように調整
-        while len(pop[left]) != len(pop[right]):
-            if len(pop[left]) < len(pop[right]):
-                pop[left].append(np.random.randint(0, 4))
-            elif len(pop[left]) > len(pop[right]):
-                pop[right].append(np.random.randint(0, 4))
+        while len(left) != len(right):
+            if len(left) < len(right):
+                left.append(np.random.randint(0, 4))
+            elif len(left) > len(right):
+                right.append(np.random.randint(0, 4))
         #次世代格納用変数
         for j in range(3):
-            next_gen.append([0]*len(pop[left]))
+            next_gen.append([0]*len(left))
         #二点交叉
         crossover_point = [0]*2
         #交叉する位置を選ぶ
-        crossover_point[0] = random.randint(1, (len(pop[left])-2))
-        crossover_point[1] = random.randint((crossover_point[0]+1), (len(pop[left])-1))
+        crossover_point[0] = random.randint(1, (len(left)-2))
+        crossover_point[1] = random.randint((crossover_point[0]+1), (len(left)-1))
         print("crossover_point: {}".format(crossover_point))
-        next_gen[i] = pop[left]
-        next_gen[i+1] = pop[right]
+        next_gen[i] = left
+        next_gen[i+1] = right
         #交叉
         next_gen[i][crossover_point[0]:crossover_point[1]], next_gen[i+1][crossover_point[0]:crossover_point[1]] = next_gen[i+1][crossover_point[0]:crossover_point[1]], next_gen[i][crossover_point[0]:crossover_point[1]]
         #一様交叉
         #引き継ぐ個体の遺伝子を決定
-        crossover_pop = [random.randint(0, 1) for j in range(len(pop[left]))]
+        crossover_pop = [random.randint(0, 1) for j in range(len(left))]
         for j in range(len(crossover_pop)):
             #交叉
             if crossover_pop[j] == 0:
-                next_gen[i+2][j] = pop[left][j]
+                next_gen[i+2][j] = left[j]
             else:
-                next_gen[i+2][j] = pop[right][j]
+                next_gen[i+2][j] = right[j]
     print("Crossover Done")
     next_gen.append(pop[list_index[max_index]])
     return next_gen
@@ -341,7 +341,7 @@ def main():
             pop = next_gen
             pop = np.array(pop) #型をlistからndarrayに変換
             gen += 1
-            #1世代30分ぐらいかかるので毎回保存
+            #1世代15分ぐらいかかるので毎回保存
             if gen%1 == 0:
                 population_save("population_gen_" + str(gen), pop)
                 print("Population saved")
