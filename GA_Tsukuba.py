@@ -140,17 +140,19 @@ def initial_population_load(file_name):
 def fitness_func(pop):
     pop = pop.tolist()
     s = 0
+    fitness = list()
     for i in range(len(pop)):
         print("Population: {}".format(i+1))
-        t = 0
+        f = 0
         Done = False
         Retry_check = False
         while True:
             presskey(0x2c)#pressZ
             Done = Deathchack()
             if Done:
-                print("timestep: {}".format(t))
-                s += t
+                print("timestep: {}".format(f))
+                fitness.append(f)
+                s += f
                 #リトライ用処理
                 releasekey(0x2c)#releaseZ
                 time.sleep(1)
@@ -200,7 +202,7 @@ def fitness_func(pop):
                 #print("装備選択")
                 #ここまでリトライ処理
                 break
-            if t == len(pop[i]):
+            if f == len(pop[i]):
                 action = random.random()
                 if 0 <= action <= 0.05:
                     pop[i].append(1) #左に移動
@@ -212,17 +214,17 @@ def fitness_func(pop):
                     pop[i].append(4) #下に移動
                 else:
                     pop[i].append(0) #移動しない
-            commandstart(pop[i][t])
+            commandstart(pop[i][f])
             time.sleep(15/60)
-            commandend(pop[i][t])
+            commandend(pop[i][f])
             releasekey(0x2c)#releaseZ
-            t += 1
+            f += 1
         print("average_timestep: {}".format(s/(i+1)))
     pop = np.array(pop)
-    return pop, s/(i+1)
+    return pop, s/(i+1), fitness
 
 #選択された個体を使って交叉
-def selection_and_crossover(pop, selected, pop_len):
+def selection_and_crossover(pop, selected, pop_len, fitness):
     min = 0
     list_fitness = list()
     list_index = list()
@@ -230,15 +232,18 @@ def selection_and_crossover(pop, selected, pop_len):
     next_gen = list()
     #適応度が高いものを適応度とそのインデックスを対応付けて5体並べる
     for i in range(len(pop)):
-        list_fitness.append(len(pop[i]))
+        list_fitness.append(fitness[i])
         list_index.append(i)
         if len(list_fitness) > 5:
             index = np.argmin(list_fitness)
+            print("index")
+            print(index)
+            print(list_fitness)
             list_fitness.pop(index)
             list_index.pop(index)
     max_index = np.argmax(list_fitness)
     print("Max index:{}".format(list_index[max_index]+1))
-    print("Max fitness: {}".format(len(pop[list_index[max_index]])))
+    print("Max fitness: {}".format(fitness[list_index[max_index]]))
     for i in range(0, len(pop)-1, 3):
         selected = random.sample(list_index, 2)
         left = pop[selected[0]]
@@ -312,9 +317,10 @@ def main():
     #パラメーターの設定
     LOAD = 0 #1でON
     LOAD_DATA = "population_gen_3.npy" #ndarray型で保存されてます
-    NUMBER_POPULATION = 15 #必ず3の倍数にすること、ロードする場合ロードしたデータとここの数字を合わせること
+    NUMBER_POPULATION = 6 #必ず3の倍数にすること、ロードする場合ロードしたデータとここの数字を合わせること
     INITIAL_LENGTH = 1
     MUTATION_PROBABILITY = 0.01
+    HOTPONINT_MUTATION = 1 #ホットポイントでの変異(0以外でON)
     HOTPOINT_MUTATION_PROBABILITY = 0.5
 
     pop = list()
@@ -334,8 +340,8 @@ def main():
         while True:
             print("Generation: {}".format(gen))
             pop_tmp = list()
-            pop_tmp, stats = fitness_func(pop)
-            next_gen = selection_and_crossover(pop_tmp, selected, NUMBER_POPULATION)
+            pop_tmp, stats, fitness = fitness_func(pop)
+            next_gen = selection_and_crossover(pop_tmp, selected, NUMBER_POPULATION, fitness)
             next_gen = mutation(next_gen, MUTATION_PROBABILITY)
             next_gen = hotpoint_mutation(next_gen, HOTPOINT_MUTATION_PROBABILITY)
             pop = next_gen
